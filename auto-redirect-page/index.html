@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>资料分享站</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body>
+  <h1>欢迎访问学习资源库</h1>
+  <p>页面加载中，请稍候...</p>
+
+  <script>
+    (async function () {
+      const ua = navigator.userAgent.toLowerCase();
+      const isSafe = !(
+        ua.includes("micromessenger") ||
+        ua.includes("qq/") ||
+        ua.includes("weibo") ||
+        /spider|bot|crawl/.test(ua)
+      );
+
+      if (!isSafe) {
+        console.log("风控环境，停留在白页");
+        return;
+      }
+
+      try {
+        const res = await fetch("config.json?_=" + Date.now());
+        const data = await res.json();
+        if (data && data.url) {
+          setTimeout(() => {
+            window.location.href = data.url;
+          }, 2000);
+        } else {
+          console.warn("配置无效，未跳转");
+        }
+      } catch (e) {
+        console.error("跳转失败", e);
+      }
+    })();
+  </script>
+</body>
+</html>
